@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+import cv2
+import os
+import argparse
+
+
+"""
+Main script of ImagePreview
+Usage: imgprev [-s] IMG
+    IMG             -> Image to preview
+    -s, --single    -> Output will be printed out using only one luminance character
+
+Made by: MattTheCoder-W
+"""
+
+
+class Preview:
+    def __init__(self, img_path: str, one_lumi=False):
+        # Load arguments
+        self.img_path = image_path
+        self.img_name = img_path.split("/")[-1]
+        self.lumi = "░▒▓█"
+        if one_lumi:
+            self.lumi = "█"
+        self.divider = 255/len(self.lumi)
+
+    def make_preview(self):
+        try:
+            # Load image
+            img = cv2.imread(self.img_path)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        except cv2.error:
+            print(f"[!] >> Error while reading file! Maybe {self.img_name} is not an image?")
+            exit(1)
+        
+        # Get Terminal size
+        w,h = self.automatic_size()
+
+        # Calculate width keeping aspect ratio
+        w = int(round((img.shape[1]*h)/img.shape[0], 0))*2
+
+        # Fit image into terminal
+        size_multi = self.find_multi(w, h)
+        w = int(round(w * size_multi, 0))
+        h = int(round(h * size_multi, 0))
+
+        # Scale image
+        img = cv2.resize(img, (w, h), interpolation=cv2.INTER_NEAREST)
+        
+        # Write image to preview file
+        prev_path = os.path.join("/tmp", self.img_name+".prev")
+        with open(prev_path, "w") as out:
+            for row in img:
+                row_string = ""
+                for pixel in row:
+                    try:
+                        char = self.lumi[int(round(self.get_lumi(pixel)/self.divider, 0))]
+                    except IndexError:
+                        char = self.lumi[-1]
+                    row_string += self.make_color(pixel, char) if self.get_lumi(pixel) > 0 else " "
+                out.write(row_string + "\n")
+        return prev_path
+
+    def find_multi(self, w: int, h: int):
+        # Get Terminal width and hight
+        tw, th = self.automatic_size()
+
+        # Calculate image size multiplier
+        multi = 1.0
+        original_w = w
+        while w > tw:
+            multi -= 0.1
+            w = original_w * multi
+        return round(multi, 2)
+
+    @staticmethod
+    def automatic_size():
+        # Get size of terminal and scale it down to its 80%
+        size = list(os.get_terminal_size())
+        size = [int(size[0]*0.8), int(size[1]*0.8)]
+        return size
+
+    @staticmethod
+    def make_color(color: list, char: chr):
+        # color -> (R, G, B)
+        # Convert character to colored character
+        R, G, B = color
+        string = f"\x1b[38;2;{R};{G};{B}m{char}\x1b[0m"
+        return string
+
+    @staticmethod
+    def get_lumi(color: list):
+        # color -> (R, G, B)
+        return int(round(sum(color)/len(color), 0))
+
+
+def file_path(string: str):
+    if os.path.exists(string):
+        if not os.path.isdir(string):
+            return string
+        else:
+            print("[!] >> This is directory not a file!")
+            exit(1)
+    else:
+        raise FileNotFoundError(string)
+
+
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("img", type=file_path, help="Path to image file to preview")
+    parser.add_argument("-s", "--single", action="store_true", help="Output will be printed with only one luminance character")
+    parser.add_argument("-c", "--cat", action="store_true", help="Use cat command instead of printout script (slightly faster printing)")
+    args = parser.parse_args()
+    args = dict(vars(args))
+    return args
+
+
+if __name__ == "__main__":
+    # Load passed arguments
+    args = get_args()
+    image_path = args['img']
+    one_lumi = args['single']
+
+    # Make preview object
+    prev = Preview(image_path, one_lumi)
+
+    print("[*] >> Making preview")
+    prev_path = prev.make_preview()
+
+    print(f"[+] >> Start of: {image_path}")
+
+    if not args['cat']:
+        os.system(f"printout {prev_path}")
+    else:
+        os.system(f"cat {prev_path}")
+
+    print(f"[+] >> End of: {image_path}")
+
+    # Remove temp preview file
+    os.remove(prev_path)
+
