@@ -1,6 +1,14 @@
 #!/bin/bash
 
-echo $(pwd) $(whoami)
+echo "[*] >> Installing pip packages"
+installed=1
+pip install -r requirements.txt || installed=0
+if [[ $installed -eq 0 ]]; then
+	echo "[!] >> Error while installing pip packages!"
+	exit 1
+else
+	echo "[+] >> Pip packages installed!"
+fi
 
 if [[ $(whoami) != "root" ]]; then
 	BIN_PATH="/home/$(whoami)/.local/bin/imgprev"
