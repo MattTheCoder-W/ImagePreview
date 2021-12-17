@@ -2,6 +2,8 @@
 
 ImagePreview is simple script that can preview images in your terminal without opening any graphical windows.
 
+![Example](https://github.com/MattTheCoder-W/ImagePreview/blob/main/README-images/example.png "Example")
+
 ## Requirements
 
 Python:
