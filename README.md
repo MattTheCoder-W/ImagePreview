@@ -25,4 +25,5 @@ Make sure that all C scripts are compiled:
 | :------------: | :------------: |
 |  `-s` | Single char mode  |
 | `-c`  |  Use `cat` instead of `printout` *(slightly faster)*  |
+| `FILE` | Image file to preview |
 
