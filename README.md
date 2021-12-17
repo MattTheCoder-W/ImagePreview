@@ -17,9 +17,11 @@ To run ImagePreview you need:
 ## Installation
 
 Make sure that all C scripts are compiled:
+
 `./compile.sh`
 
 Add script to .local/bin by running:
+
 `./install.sh`
 
 *(If you want to place this script in other place, just move it manually)*
